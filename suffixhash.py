@@ -7,16 +7,16 @@ from time import time
 import sys
 from multiprocessing import Pool, cpu_count, set_start_method
 
-sys.path.append('/home/gcgreen2/alignment/SequenceAlignmentAndSketching/utils')
-import seq_utils as su
+# sys.path.append('/home/gcgreen2/alignment/SequenceAlignmentAndSketching/utils')
+from utils import seq_utils as su, utils
 # import utils
 
 base_to_int = {'A':0, 'T':1, 'G':2, 'C':3}
 
-def get_stat_inflec(arr,k_thresh): return sum([max(0,v-k_thresh) for v in arr])
-def get_stat_inflec2(arr,k_thresh): return sum([v for v in arr if v>k_thresh])
+# def get_stat_inflec(arr,k_thresh): return sum([max(0,v-k_thresh) for v in arr])
+# def get_stat_inflec2(arr,k_thresh): return sum([v for v in arr if v>k_thresh])
 def get_stat_max(arr,k_thresh): return max(arr)
-def get_stat_max2(arr,k_thresh): return round(np.dot(np.sort(np.partition(arr,-5)[-5:])[::-1], [2**(-x) for x in range(5)]),1)    
+# def get_stat_max2(arr,k_thresh): return round(np.dot(np.sort(np.partition(arr,-5)[-5:])[::-1], [2**(-x) for x in range(5)]),1)    
 
 
 def obtain_masks(string_size,number_of_masks): 
@@ -151,7 +151,7 @@ def pairwise_overlap_ests(rc):
 
 ####################################################################
 
-def write_overlaps(aln_path, estimates, ids, m, modifier='w', direc='+', use_ids=False):
+def write_overlaps(aln_path, estimates, ids, m=0, modifier='w', direc='+', use_ids=False):
     print(f'# overlaps: {sum([len(estimates[i][m]) for i in range(len(estimates))])}')
     ids = ids if use_ids else [str(i) for i in range(len(ids))]
     with open(aln_path, modifier) as fh:
@@ -160,34 +160,34 @@ def write_overlaps(aln_path, estimates, ids, m, modifier='w', direc='+', use_ids
                 line = [ids[i], ids[j], str(estimates[i][m][j]), direc]
                 fh.write('\t'.join(line)+'\n')
 
-def find_overlaps(fasta_file, aln_paths, **args):
+def find_overlaps(fasta_file, aln_path, n_hash, **args):
     global seqs, seqs_rc, masks, sketches, sketches_rc, stat_threshs, stat_funcs, k_thresh
     seqs,ids = su.get_seqs(fasta_file, return_ids=True)
     seqs_rc = su.revcomp_seqs(seqs) if args['rc'] else None
     
+    utils.print_banner('SKETCHING READS')
     if 'sketches_path' in args and exists(args['sketches_path']):
         sketches, sketches_rc = np.load(args['sketches_path'], allow_pickle=True)
-        sketches = [sketch[:args['n_hash']] for sketch in sketches]
+        sketches = [sketch[:n_hash] for sketch in sketches]
         if sketches_rc is not None: sketches_rc = [sketch[:args['n_hash']] for sketch in sketches_rc] 
     else:
-        masks = obtain_masks(max([len(seq) for seq in seqs]), args['n_hash'])
+        masks = obtain_masks(max([len(seq) for seq in seqs]), n_hash)
         sketches = get_all_sketches(rc=False)
         sketches_rc = get_all_sketches(rc=True) if args['rc'] else None
     if 'sketches_path' in args and not exists(args['sketches_path']):
         np.save(args['sketches_path'], [sketches, sketches_rc]) 
         print(f'saved sketches at {args["sketches_path"]}')
         
-    stat_threshs, stat_funcs, k_thresh = get_threshs_and_funcs(args['methods'], rc=args['rc'])
+    stat_threshs, stat_funcs, k_thresh = get_threshs_and_funcs(['max'], rc=args['rc'])
     
+    utils.print_banner('PERFORMING PAIRWISE COMPARISON')
     method_ests = pairwise_overlap_ests(rc=False)
-    for m,aln_path in zip(np.arange(len(args['methods'])), aln_paths):
-        write_overlaps(aln_path, method_ests, ids, m)
+    write_overlaps(aln_path, method_ests, ids)
         
     if args['rc']:
         del method_ests
         method_ests = pairwise_overlap_ests(rc=True)
-        for m,aln_path in zip(np.arange(len(args['methods'])), aln_paths):
-            write_overlaps(aln_path, method_ests, ids, m, modifier='a', direc='-')
+        write_overlaps(aln_path, method_ests, ids, modifier='a', direc='-')
                 
     
     

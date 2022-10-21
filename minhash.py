@@ -4,8 +4,8 @@ import sys
 from multiprocessing import Pool, cpu_count
 from time import time
 
-sys.path.append('/home/gcgreen2/alignment/SequenceAlignmentAndSketching/utils')
-import seq_utils as su
+# sys.path.append('/home/gcgreen2/alignment/SequenceAlignmentAndSketching/utils')
+from utils import seq_utils as su, utils
 
 base_to_bin = {'A':'00', 'T':'01', 'G':'10', 'C':'11'}
 # rc_base = {'A':'T','T':'A','G':'C','C':'G'}
@@ -82,39 +82,22 @@ def write_overlaps(aln_path, estimates, ids, modifier='w', direc='+', use_ids=Fa
                 line = [ids[i], ids[j], str(estimates[i][j]), direc]
                 fh.write('\t'.join(line)+'\n')
 
-def find_overlaps(fasta_file, aln_paths, **args):
+def find_overlaps(fasta_file, aln_path, k, n_hash, n_bits, **args):
     global seqs, seqs_rc, hash_funcs, sketches, sketches_rc
     seqs,ids = su.get_seqs(fasta_file, return_ids=True)
     
-    for aln_path,k in zip(aln_paths, args['ks']):
-        hash_funcs = [random_hash_func(n_bits=args['n_bits'], k=k) for _ in range(args['n_hash'])]
-        sketches = get_all_sketches(rc=False)
-        estimates = pairwise_overlap_ests(rc=False)
-        write_overlaps(aln_path, estimates, ids, modifier='w', direc='+', use_ids=args['use_ids'])
-
-        if args['rc']:
-            del estimates
-            seqs_rc = su.revcomp_seqs(seqs)
-            sketches_rc = get_all_sketches(rc=True)
-            estimates = pairwise_overlap_ests(rc=True)
-            write_overlaps(aln_path, estimates, ids, modifier='a', direc='-', use_ids=args['use_ids'])    
+    utils.print_banner('SKETCHING READS')
+    hash_funcs = [random_hash_func(n_bits=n_bits, k=k) for _ in range(n_hash)]
+    sketches = get_all_sketches(rc=False)
     
-#######################################################
-#ARCHIVE
+    utils.print_banner('PERFORMING PAIRWISE COMPARISON')
+    estimates = pairwise_overlap_ests(rc=False)
+    write_overlaps(aln_path, estimates, ids, modifier='w', direc='+', use_ids=args['use_ids'])
+
+    if args['rc']:
+        del estimates
+        seqs_rc = su.revcomp_seqs(seqs)
+        sketches_rc = get_all_sketches(rc=True)
+        estimates = pairwise_overlap_ests(rc=True)
+        write_overlaps(aln_path, estimates, ids, modifier='a', direc='-', use_ids=args['use_ids'])    
     
-# def pairwise_overlap_ests(seq_lens, sketches):
-#     pairwise_ests = []
-#     n = len(seq_lens)
-#     for i in tqdm(range(n), desc='Estimating pairwise overlaps', leave=True):
-#         for j in range(n):
-#             if i==j: continue
-#             theta_hat = est_overlap(sketches[i], sketches[j], seq_lens[i], seq_lens[j])
-#             if theta_hat > 0: 
-#     pairwise_ests.append((i+1,j+1,theta_hat,seq_lens[i],seq_lens[j]))
-#     return pairwise_ests
-
-# def find_overlaps(fasta_file, aln_file, k, n_hash=100, n_bits=20, **args):
-#     seqs = su.get_seqs(fasta_file); seq_lens = [len(s) for s in seqs]
-#     minhashes = hu.get_all_sketches(minhash, seqs, k, n_hash, n_bits)
-#     au.find_overlaps(aln_file, minhashes, seq_lens, est_overlap)
-
