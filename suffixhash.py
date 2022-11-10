@@ -1,7 +1,4 @@
 import numpy as np
-from scipy.optimize import minimize
-from scipy.stats import norm
-from tqdm import tqdm
 from os.path import exists
 from time import time
 import sys

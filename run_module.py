@@ -31,7 +31,7 @@ if __name__ == "__main__":
     args = add_args(args)
     check_args(args)
     utils.setup_out_dir(**args)
-    utils.print_header('SuffixHash Sequence Alignment Estimator')
+    utils.print_header()
     
     print(f'running {args["method"]} on {args["fasta_file"]}')
     if args['method'] == 'suffixhash':

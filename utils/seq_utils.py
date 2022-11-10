@@ -22,15 +22,18 @@ def get_fasta(file):
 def get_fastq(file):
     return pyfastx.Fastq(file)
 
-def get_seqs(file, fa_fq='fa', return_ids=False):
-    seqs = []
-    ids = []
-    with open(file, 'r') as fh:
-        for line in fh.readlines():
-            if line[0] == ">" or line[0] == '@': 
-                seqs.append('')
-                ids.append(line[1:].split()[0])
-            else: seqs[-1] += line
+def get_seqs(file, return_ids=False):
+    seqs = pyfastx.Fastx(file)
+    seqs = list(seqs)
+    seqs,ids = [s[1] for s in seqs], [s[0] for s in seqs]
+#    seqs = []
+#    ids = []
+#    with open(file, 'r') as fh:
+#        for line in fh.readlines():
+#            if line[0] == ">" or line[0] == '@': 
+#                seqs.append('')
+#                ids.append(line[1:].split()[0])
+#            else: seqs[-1] += line
     seqs = clean_seqs(seqs)
     if return_ids:
         return seqs,ids
