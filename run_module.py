@@ -21,8 +21,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Sequence Alignment via Variable-Length Substring Matching')
     parser.add_argument('--out', type=str, dest='out_dir', help='output directory', required=True)
     parser.add_argument('--method', type=str, help='alignment method (suffixhash/minhash)', required=True)
-    parser.add_argument('--fasta', type=str, dest='fasta_file', help='path to reads fasta')
-    parser.add_argument('--n_hash', type=int, help='number of hash functions to use')
+    parser.add_argument('--fasta', type=str, dest='fasta_file', help='path to reads fasta', required=True)
+    parser.add_argument('--n_hash', type=int, default=500, help='number of hash functions to use')
     parser.add_argument('--k', type=int, help='k-value (for minhash only)', required=False, default=14)
     return vars(parser.parse_args())
 

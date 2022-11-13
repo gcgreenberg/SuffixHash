@@ -7,7 +7,7 @@ def print_banner(x):
 
 def print_header():
     print_banner('SuffixHash Sequence Alignment Estimator')
-    for _ in range(2): print('=======================================')
+    for _ in range(2): print('===============================================================')
         
 def setup_out_dir(out_dir,  **args):
     tmp_dir = join(out_dir, 'tmp')
